@@ -108,8 +108,23 @@ function Basic(props) {
       <div className='flex justify-center'>
         <img src="/images/header.png" alt="Header" width={800} height={300} />
       </div>
-      <div onClick={() => setShowVideo(!showVideo)} className='text-blue-600 cursor-pointer mb-4 underline'>How does it work?</div>
-      {showVideo && (
+      <div className='mb-8'>
+        <h1 className='text-3xl font-bold mb-2'>Tick Tick to Todoist</h1>
+        <p className='text-slate-600'>Migrate your tick tick tasks to todoist with a little help from this tool</p>
+      </div>
+      <details className='mb-4'>
+        <summary className='cursor-pointer'>Details</summary>
+        <ul className='ml-8 pt-2'>
+          <li className='list-disc mb-1'>Task Title is transferred</li>
+          <li className='list-disc mb-1'>Task Description is transferred (except media like videos and images)</li>
+          <li className='list-disc mb-1'>Task Priority is transferred</li>
+          <li className='list-disc mb-1'>Task Due Date is transferred</li>
+          <li className='list-disc mb-1'>Task recurrency is not transferred (task itself is transferred)</li>
+          <li className='list-disc mb-1'>Projects are transferred</li>
+        </ul>
+      </details>
+      <details className='mb-6'>
+        <summary className='cursor-pointer'>How does it work?</summary>
         <div className='mb-8 bg-slate-50 p-6 rounded-lg'>
           <div className='mb-4'>
             <div className='mb-2'>1. Download your TickTick Backup here: <a className='text-blue-600' href="https://ticktick.com/webapp/#settings/backup">https://ticktick.com/webapp/#settings/backup</a></div>
@@ -124,7 +139,7 @@ function Basic(props) {
             </div>
           </div>
         </div>
-      )}
+      </details>
       {error && <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded relative" role="alert">{error}</div>}
       <div {...getRootProps({className: 'dropzone'})} className="bg-slate-50 border border-slate-300 p-4 border-dashed text-slate-500 rounded-lg cursor-pointer">
         <input {...getInputProps()} />
