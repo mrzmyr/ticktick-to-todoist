@@ -43,7 +43,7 @@ function Basic(props) {
             TODOIST_HEADER,
             ...tasks.map((task) => {
               const [folderName, listName, title, tags, content, isCheckList, startDate, dueDate, reminder, repeat, priority, status, createdTime, completedTime, order, timezone, isAllDay, isFloating, columnName, columnOrder, viewMode, taskId, parentId] = task;
-              return ['task', title, content, priority, 0, '', '', dueDate, 'en', 'UTC']
+              return ['task', title, content, priority, 1, '', '', dueDate, 'en', 'UTC']
             })
           ];
           console.log(csv)
@@ -151,9 +151,8 @@ function Basic(props) {
         ))}
       </aside>
       )}
-      <div className='mt-8 text-center text-slate-400'>The data is never transferred to a server and therefore remains private.</div>
-      <div className='mt-8 text-center text-slate-400'>Source Code on <a href="">GitHub</a></div>
-      <div className='mt-8 text-center text-slate-400'>Provided by @mrzmyr</div>
+      <div className='mt-8 text-sm text-center text-slate-600'>The data is never transferred to a server and therefore remains private.</div>
+      <div className='mt-2 text-sm text-center text-slate-400'>Source Code on <a href="https://github.com/mrzmyr/ticktick-to-todoist" className='underline'>GitHub</a> by <a className='underline' href="https://twitter.com/mrzmyr">@mrzmyr</a></div>
     </section>
   );
 }
