@@ -12,6 +12,45 @@ import { useDropzone } from 'react-dropzone';
 const TICKTICK_HEADER = ['Folder Name', 'List Name', 'Title', 'Tags', 'Content', 'Is Check list', 'Start Date', 'Due Date', 'Reminder', 'Repeat', 'Priority', 'Status', 'Created Time', 'Completed Time', 'Order', 'Timezone', 'Is All Day', 'Is Floating', 'Column Name', 'Column Order', 'View Mode', 'taskId', 'parentId'];
 const TODOIST_HEADER = ['TYPE', 'CONTENT', 'DESCRIPTION', 'PRIORITY', 'INDENT', 'AUTHOR', 'RESPONSIBLE', 'DATE', 'DATE_LANG', 'TIMEZONE']
 
+function ProjectListItem({ project }) {
+  return (
+    <div>
+    {/* copy to clipboard */}
+    <div className='flex flex-row justify-between items-center mb-2 pb-2 border-b'>
+      <div type={'text'} key={project.title} className='flex items-center basis-7/12 pr-4'>
+          <span>{project.title}</span>
+          <span className='w-7'>
+          <svg onClick={() => {
+            navigator.clipboard.writeText(project.title);
+            toast.success('Copied!');
+            posthog.capture('copy_project_title')
+          }} 
+            className='ml-2 cursor-pointer' xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </span>
+      </div>
+      <div className='basis-2/12'>
+        {project.tasks.length} tasks
+      </div>
+      <div className='flex justify-end basis-3/12'>
+        <button type="button" className="relative inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" 
+          onClick={() => {
+            const a = document.createElement('a') // Create "a" element
+            const blob = new Blob([project.csv], {type: 'csv/text'}) // Create a blob (file-like object)
+            const url = URL.createObjectURL(blob) // Create an object URL from blob
+            a.setAttribute('href', url) // Set "a" element link
+            a.setAttribute('download', `${project.title}.csv`) // Set download filename
+            a.click() // Start downloading
+            posthog.capture('download_csv')
+          }}
+        >
+            Download CSV
+        </button>
+      </div>
+    </div>
+  </div>
+  )
+}
+
 function Basic(props) {
   const [error, setError] = React.useState(null);
   const [projects, setProjects] = React.useState([]);
@@ -41,7 +80,7 @@ function Basic(props) {
         for(const [projectName, tasks] of Object.entries(tasksPerProject)) {
           const csv = [
             TODOIST_HEADER,
-            ...tasks.map((task) => {
+            ...tasks.filter(d => d[11] === '0').map((task) => {
               const [folderName, listName, title, tags, content, isCheckList, startDate, dueDate, reminder, repeat, priority, status, createdTime, completedTime, order, timezone, isAllDay, isFloating, columnName, columnOrder, viewMode, taskId, parentId] = task;
               return ['task', title, content, 4 - priority, 1, '', '', dueDate, 'en', 'UTC']
             })
@@ -49,7 +88,7 @@ function Basic(props) {
           const project = {
             title: projectName,
             csv: stringify(csv),
-            tasks: tasks.map((task) => {
+            tasks: tasks.filter(d => d[11] === '0').map((task) => {
               return {
                 title: task[2],
                 description: task[4],
@@ -121,6 +160,7 @@ function Basic(props) {
           <li className='list-disc mb-1'>Task Due Date is transferred</li>
           <li className='list-disc mb-1'>Task recurrency is not transferred (task itself is transferred)</li>
           <li className='list-disc mb-1'>Projects are transferred</li>
+          <li className='list-disc mb-1'>Tasks marked as done or won&apos;t do are not transferred</li>
         </ul>
       </details>
       <details className='mb-6'>
@@ -147,42 +187,13 @@ function Basic(props) {
       </div>
       {projects.length > 0 && (
       <aside className=''>
-        <h4 className='tex-2xl font-bold mt-4 mb-2'>Projects</h4>
-        {projects.map((project) => (
-          <div key={project.key}>
-            {/* copy to clipboard */}
-            <div className='grid grid-cols-3 gap-4 items-center mb-2 pb-2 border-b'>
-              <div type={'text'} key={project.title} className='flex items-center'>
-                  <span>{project.title}</span>
-                  <div className='w-7'>
-                  <svg onClick={() => {
-                    navigator.clipboard.writeText(project.title);
-                    toast.success('Copied!');
-                    posthog.capture('copy_project_title')
-                  }} 
-                    className='ml-2 cursor-pointer' xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                    </div>
-              </div>
-              <div>
-                {project.tasks.length} tasks
-              </div>
-              <div className='flex justify-end'>
-                <button type="button" className="relative inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" 
-                  onClick={() => {
-                    const a = document.createElement('a') // Create "a" element
-                    const blob = new Blob([project.csv], {type: 'csv/text'}) // Create a blob (file-like object)
-                    const url = URL.createObjectURL(blob) // Create an object URL from blob
-                    a.setAttribute('href', url) // Set "a" element link
-                    a.setAttribute('download', `${project.title}.csv`) // Set download filename
-                    a.click() // Start downloading
-                    posthog.capture('download_csv')
-                  }}
-                >
-                    Download CSV
-                </button>
-              </div>
-            </div>
-          </div>
+        <h4 className='text-xl font-bold mt-4 pb-2 mb-2 border-b'>Projects</h4>
+        {projects.filter(d => d.tasks.length > 0).map((project) => (
+          <ProjectListItem key={project.key} project={project} />
+        ))}
+        <h4 className='text-xl font-bold mt-8 pb-2 mb-2 border-b'>Projects (No Tasks)</h4>
+        {projects.filter(d => d.tasks.length === 0).map((project) => (
+          <ProjectListItem key={project.key} project={project} />
         ))}
       </aside>
       )}
