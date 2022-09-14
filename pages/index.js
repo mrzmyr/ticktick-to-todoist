@@ -21,8 +21,8 @@ function Basic(props) {
     
     acceptedFiles.forEach((file) => {
       const reader = new FileReader()
-      reader.onabort = () => console.log('file reading was aborted')
-      reader.onerror = () => console.log('file reading has failed')
+      reader.onabort = () => posthog.capture('file_load_error', { type: 'onabort' })
+      reader.onerror = () => posthog.capture('file_load_error', { type: 'onerror' })
       reader.onload = () => {
         const binaryStr = reader.result
         const csvData = parse(binaryStr.toString());
@@ -30,7 +30,7 @@ function Basic(props) {
         const data = csvData.slice(1);
 
         if(!_.isEqual(header, TICKTICK_HEADER)) {
-          posthog.capture('file_load_error')
+          posthog.capture('file_load_error', { type: 'invalid_header' })
           setError('Invalid CSV file, please provide a tick tick backup file');
           return;
         }
@@ -46,7 +46,6 @@ function Basic(props) {
               return ['task', title, content, priority, 1, '', '', dueDate, 'en', 'UTC']
             })
           ];
-          console.log(csv)
           const project = {
             title: projectName,
             csv: stringify(csv),
@@ -78,6 +77,8 @@ function Basic(props) {
     }
   });
 
+  const [showVideo, setShowVideo] = React.useState(false);
+
   return (
     <section className="max-w-2xl mx-auto my-8">
       <Head>
@@ -107,10 +108,27 @@ function Basic(props) {
       <div className='flex justify-center'>
         <img src="/images/header.png" alt="Header" width={800} height={300} />
       </div>
+      <div onClick={() => setShowVideo(!showVideo)} className='text-blue-600 cursor-pointer mb-4 underline'>How does it work?</div>
+      {showVideo && (
+        <div className='mb-8 bg-slate-50 p-6 rounded-lg'>
+          <div className='mb-4'>
+            <div className='mb-2'>1. Download your TickTick Backup here: <a className='text-blue-600' href="https://ticktick.com/webapp/#settings/backup">https://ticktick.com/webapp/#settings/backup</a></div>
+            <div><img className='m-auto' width='90%' src="/images/how-to-1.png" alt="Create Tick Tick Backup"/></div>
+          </div>
+          <div className='mb-4'>
+            <div className='mb-2'>2. Create Projects and Import Tasks to Todoist</div>
+            <div>
+              <video controls width="90%" className="m-auto">
+                <source src="/videos/how-it-works.mp4" type="video/mp4" />
+              </video>
+            </div>
+          </div>
+        </div>
+      )}
       {error && <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded relative" role="alert">{error}</div>}
       <div {...getRootProps({className: 'dropzone'})} className="bg-slate-50 border border-slate-300 p-4 border-dashed text-slate-500 rounded-lg cursor-pointer">
         <input {...getInputProps()} />
-        <p>Drag &apos;n&apos; drop some files here, or click to select files</p>
+        <p>Drop your TickTick backup csv file here.</p>
       </div>
       {projects.length > 0 && (
       <aside className=''>
@@ -121,12 +139,14 @@ function Basic(props) {
             <div className='grid grid-cols-3 gap-4 items-center mb-2 pb-2 border-b'>
               <div type={'text'} key={project.title} className='flex items-center'>
                   <span>{project.title}</span>
+                  <div className='w-7'>
                   <svg onClick={() => {
                     navigator.clipboard.writeText(project.title);
                     toast.success('Copied!');
                     posthog.capture('copy_project_title')
                   }} 
-                    className='ml-2 cursor-pointer' xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    className='ml-2 cursor-pointer' xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </div>
               </div>
               <div>
                 {project.tasks.length} tasks
