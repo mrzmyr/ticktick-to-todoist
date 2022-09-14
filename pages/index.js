@@ -25,7 +25,7 @@ function Basic(props) {
       reader.onerror = () => posthog.capture('file_load_error', { type: 'onerror' })
       reader.onload = () => {
         const binaryStr = reader.result
-        const csvData = parse(binaryStr.toString());
+        const csvData = parse(binaryStr.toString().split('\n').slice(6).join('\n'));
         const header = csvData[0];
         const data = csvData.slice(1);
 
