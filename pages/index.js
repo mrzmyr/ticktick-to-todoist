@@ -1,13 +1,13 @@
-import toast, { Toaster } from 'react-hot-toast';
 import { parse } from 'csv-parse/browser/esm/sync';
 import { stringify } from 'csv-stringify/browser/esm/sync';
 import _ from 'lodash';
 import posthog from 'posthog-js';
+import toast, { Toaster } from 'react-hot-toast';
 
-import React, { useCallback, useEffect } from 'react';
-import { useDropzone } from 'react-dropzone';
 import { NextSeo } from 'next-seo';
 import Head from 'next/head';
+import React, { useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
 
 const TICKTICK_HEADER = ['Folder Name', 'List Name', 'Title', 'Tags', 'Content', 'Is Check list', 'Start Date', 'Due Date', 'Reminder', 'Repeat', 'Priority', 'Status', 'Created Time', 'Completed Time', 'Order', 'Timezone', 'Is All Day', 'Is Floating', 'Column Name', 'Column Order', 'View Mode', 'taskId', 'parentId'];
 const TODOIST_HEADER = ['TYPE', 'CONTENT', 'DESCRIPTION', 'PRIORITY', 'INDENT', 'AUTHOR', 'RESPONSIBLE', 'DATE', 'DATE_LANG', 'TIMEZONE']
@@ -43,7 +43,7 @@ function Basic(props) {
             TODOIST_HEADER,
             ...tasks.map((task) => {
               const [folderName, listName, title, tags, content, isCheckList, startDate, dueDate, reminder, repeat, priority, status, createdTime, completedTime, order, timezone, isAllDay, isFloating, columnName, columnOrder, viewMode, taskId, parentId] = task;
-              return ['task', title, content, priority, 1, '', '', dueDate, 'en', 'UTC']
+              return ['task', title, content, 4 - priority, 1, '', '', dueDate, 'en', 'UTC']
             })
           ];
           const project = {
@@ -55,7 +55,7 @@ function Basic(props) {
                 description: task[4],
                 due: task[7],
                 priority: task[9],
-                status: task[10] + 1,
+                status: 4 - task[10],
               }
             })
           }
