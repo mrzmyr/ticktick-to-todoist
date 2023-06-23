@@ -133,7 +133,7 @@ function Basic(props) {
             TODOIST_HEADER,
             ...tasks.map((task) => {
               const [folderName, listName, title, kind, tags, content, isCheckList, startDate, dueDate, reminder, repeat, priority, status, createdTime, completedTime, order, timezone, isAllDay, isFloating, columnName, columnOrder, viewMode, taskId, parentId] = task;
-              return ['task', title, content.replace(/\r\r/g, "\n"), PRIORTY_MAP[priority], indents.get(taskId), '', '', dueDate, 'en', 'UTC']
+              return ['task', title, content.replace(/\r/g, "\n"), PRIORTY_MAP[priority], indents.get(taskId), '', '', dueDate, 'en', 'UTC']
             })
           ];
 
