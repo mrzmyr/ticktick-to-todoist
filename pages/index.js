@@ -11,6 +11,8 @@ import { useDropzone } from 'react-dropzone';
 
 const TICKTICK_HEADER = ['Folder Name', 'List Name', 'Title', 'Kind', 'Tags', 'Content', 'Is Check list', 'Start Date', 'Due Date', 'Reminder', 'Repeat', 'Priority', 'Status', 'Created Time', 'Completed Time', 'Order', 'Timezone', 'Is All Day', 'Is Floating', 'Column Name', 'Column Order', 'View Mode', 'taskId', 'parentId'];
 const TODOIST_HEADER = ['TYPE', 'CONTENT', 'DESCRIPTION', 'PRIORITY', 'INDENT', 'AUTHOR', 'RESPONSIBLE', 'DATE', 'DATE_LANG', 'TIMEZONE']
+const PRIORTY_MAP = {0:0, 5:1, 3:2, 1:3}
+
 
 function ProjectListItem({ project }) {
   return (
@@ -76,19 +78,69 @@ function Basic(props) {
 
         const tasksPerProject = _.groupBy(data, (row) => row[1]);
 
-        const projects = []
+        const projects = [];
         for(const [projectName, tasks] of Object.entries(tasksPerProject)) {
+          const rootTasks = [];
+          const childTasks = new Map();
+          const indents = new Map();
+
+          tasks = tasks.filter(d => d[12] === '0');
+
+          tasks.forEach(function(task) {
+            if (!task[23]) {
+              rootTasks.push(task[22]);
+            } else {
+              if (childTasks.has(task[23])) {
+                childTasks.get(task[23]).push(task[22]);
+              } else {
+                childTasks.set(task[23], [task[22]]);
+              }
+            }
+          });
+
+          rootTasks.forEach(function(rootTask) {
+             indents.set(rootTask, 1)
+             if (childTasks.has(rootTask)) {
+               childTasks.get(rootTask).forEach(function(l1Task) {
+                 indents.set(l1Task,2);
+                 if (childTasks.has(l1Task)) {
+                   childTasks.get(l1Task).forEach(function(l2Task) {
+                     indents.set(l2Task,3);
+                     if (childTasks.has(l2Task)) {
+                       childTasks.get(l2Task).forEach(function(l3Task) {
+                         indents.set(l3Task,4);
+                         if (childTasks.has(l3Task)) {
+                           childTasks.get(l3Task).forEach(function(l4Task) {
+                             indents.set(l4Task,4); // Todoist only goes 4 deep, so flatten anything at level 5 to level 4
+                           });
+                         }
+                       });
+                     }
+                   });
+                 }
+               });
+             }
+           });
+
+          const sortOrder = Array.from(indents.keys());
+
+          const sorter = (a, b) => {
+            return sortOrder.indexOf(a[22]) < sortOrder.indexOf(b[22]) ? -1 : 1;
+          };
+          tasks.sort(sorter);
+
           const csv = [
             TODOIST_HEADER,
-            ...tasks.filter(d => d[11] === '0').map((task) => {
-              const [folderName, listName, title, tags, content, isCheckList, startDate, dueDate, reminder, repeat, priority, status, createdTime, completedTime, order, timezone, isAllDay, isFloating, columnName, columnOrder, viewMode, taskId, parentId] = task;
-              return ['task', title, content, 4 - priority, 1, '', '', dueDate, 'en', 'UTC']
+            ...tasks.map((task) => {
+              const [folderName, listName, title, kind, tags, content, isCheckList, startDate, dueDate, reminder, repeat, priority, status, createdTime, completedTime, order, timezone, isAllDay, isFloating, columnName, columnOrder, viewMode, taskId, parentId] = task;
+              return ['task', title, content.replace(/\r\r/g, "\n"), PRIORTY_MAP[priority], indents.get(taskId), '', '', dueDate, 'en', 'UTC']
             })
           ];
+
           const project = {
             title: projectName,
             csv: stringify(csv),
-            tasks: tasks.filter(d => d[11] === '0').map((task) => {
+            tasks: tasks.map((task) => {
               return {
                 title: task[2],
                 description: task[4],
